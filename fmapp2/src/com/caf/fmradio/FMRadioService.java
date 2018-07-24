@@ -510,6 +510,9 @@ public class FMRadioService extends Service
                     mAudioTrack.release();
                     Log.d(LOGTAG, "RecordSinkThread: mAudioTrack.release() completed");
                 }
+                Log.d(LOGTAG, "RecordSinkThread: Reset mAudioRecord mAudioTrack to null");
+                mAudioRecord = null;
+                mAudioTrack = null;
             }
         }
     }
