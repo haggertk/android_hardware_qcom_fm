@@ -510,6 +510,9 @@ public class FMRadioService extends Service
                     mAudioTrack.release();
                     Log.d(LOGTAG, "RecordSinkThread: mAudioTrack.release() completed");
                 }
+                Log.d(LOGTAG, "RecordSinkThread: Reset mAudioRecord mAudioTrack to null");
+                mAudioRecord = null;
+                mAudioTrack = null;
             }
         }
     }
@@ -3660,6 +3663,12 @@ public class FMRadioService extends Service
           if (mCallbacks != null) {
               try {
                   mCallbacks.getStationParamCb(val, status);
+                  if (mReceiver != null && mReceiver.isCherokeeChip()) {
+                      synchronized(mEventWaitLock) {
+                          mEventReceived = true;
+                          mEventWaitLock.notify();
+                      }
+                  }
               } catch (RemoteException e) {
                   e.printStackTrace();
               }
@@ -3893,9 +3902,12 @@ public class FMRadioService extends Service
       return frequencyString;
    }
    public int getRssi() {
-      if (mReceiver != null)
-          return mReceiver.getRssi();
-      else
+      if (mReceiver != null) {
+          mEventReceived = false;
+          int rssi = mReceiver.getRssi();
+          waitForFWEvent();
+          return rssi;
+      } else
           return Integer.MAX_VALUE;
    }
    public int getIoC() {
@@ -3921,9 +3933,12 @@ public class FMRadioService extends Service
           mReceiver.setHiLoInj(inj);
    }
    public int getSINR() {
-      if (mReceiver != null)
-          return mReceiver.getSINR();
-      else
+      if (mReceiver != null) {
+          mEventReceived = false;
+          int sinr = mReceiver.getSINR();;
+          waitForFWEvent();
+          return sinr;
+      } else
           return Integer.MAX_VALUE;
    }
    public boolean setSinrSamplesCnt(int samplesCnt) {
